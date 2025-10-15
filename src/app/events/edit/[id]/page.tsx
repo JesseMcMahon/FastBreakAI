@@ -92,9 +92,9 @@ function EditEventContent() {
         if (eventResult.success && eventResult.data) {
           const event = eventResult.data;
           // Separate primary venue from other venues
-          const primaryVenue = event.venues?.find((v: any) => v.is_primary);
+          const primaryVenue = event.venues?.find((v: { is_primary: boolean }) => v.is_primary);
           const otherVenues =
-            event.venues?.filter((v: any) => !v.is_primary) || [];
+            event.venues?.filter((v: { is_primary: boolean }) => !v.is_primary) || [];
 
           form.setValue("name", event.name || "");
           form.setValue("description", event.description || "");
@@ -113,7 +113,7 @@ function EditEventContent() {
           form.setValue("primary_venue_id", primaryVenue?.id || "");
           form.setValue(
             "other_venue_ids",
-            otherVenues.map((v: any) => v.id)
+            otherVenues.map((v: { id: string }) => v.id)
           );
           form.setValue("sport_type", event.sport_type || "");
         } else {
@@ -126,7 +126,7 @@ function EditEventContent() {
         const venuesResult = await getVenues();
         if (venuesResult.success && venuesResult.data) {
           const userVenues = venuesResult.data.filter(
-            (venue: any) => venue.created_by === user?.id
+            (venue: { created_by: string }) => venue.created_by === user?.id
           );
           setVenues(userVenues);
         }
