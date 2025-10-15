@@ -4,40 +4,66 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Zap, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 import { createVenue } from "@/lib/actions/venues";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+// Form validation schema
+const venueSchema = z.object({
+  name: z.string().min(1, "Venue name is required"),
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().optional(),
+  capacity: z.string().optional(),
+  description: z.string().optional(),
+});
+
+type VenueFormData = z.infer<typeof venueSchema>;
+
 function AddVenueContent() {
-  const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    city: "",
-    state: "",
-    capacity: "",
-    description: "",
-  });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<VenueFormData>({
+    resolver: zodResolver(venueSchema),
+    defaultValues: {
+      name: "",
+      address: "",
+      city: "",
+      state: "",
+      capacity: "",
+      description: "",
+    },
+  });
+
+  const onSubmit = async (data: VenueFormData) => {
     setLoading(true);
 
     try {
       const venueData = {
-        name: formData.name,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state || undefined,
-        capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
-        description: formData.description || undefined,
+        name: data.name,
+        address: data.address,
+        city: data.city,
+        state: data.state || undefined,
+        capacity: data.capacity ? parseInt(data.capacity) : undefined,
+        description: data.description || undefined,
         created_by: user!.id,
       };
 
@@ -54,15 +80,6 @@ function AddVenueContent() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
   };
 
   return (
@@ -101,119 +118,154 @@ function AddVenueContent() {
               </p>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-blue-900">
-                      Venue Name *
-                    </Label>
-                    <Input
-                      id="name"
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
                       name="name"
-                      placeholder="e.g., Madison Square Garden"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                      required
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-blue-900">
+                            Venue Name *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g., Madison Square Garden"
+                              className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="capacity" className="text-blue-900">
-                      Capacity
-                    </Label>
-                    <Input
-                      id="capacity"
+                    <FormField
+                      control={form.control}
                       name="capacity"
-                      type="number"
-                      placeholder="e.g., 20000"
-                      value={formData.capacity}
-                      onChange={handleChange}
-                      className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-blue-900">
+                            Capacity
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="e.g., 20000"
+                              className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="address" className="text-blue-900">
-                    Address *
-                  </Label>
-                  <Input
-                    id="address"
+                  <FormField
+                    control={form.control}
                     name="address"
-                    placeholder="e.g., 4 Pennsylvania Plaza"
-                    value={formData.address}
-                    onChange={handleChange}
-                    className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                    required
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-900">
+                          Address *
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., 4 Pennsylvania Plaza"
+                            className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city" className="text-blue-900">
-                      City *
-                    </Label>
-                    <Input
-                      id="city"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
                       name="city"
-                      placeholder="e.g., New York"
-                      value={formData.city}
-                      onChange={handleChange}
-                      className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                      required
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-blue-900">
+                            City *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g., New York"
+                              className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="state" className="text-blue-900">
-                      State
-                    </Label>
-                    <Input
-                      id="state"
+                    <FormField
+                      control={form.control}
                       name="state"
-                      placeholder="e.g., NY"
-                      value={formData.state}
-                      onChange={handleChange}
-                      className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-blue-900">State</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g., NY"
+                              className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description" className="text-blue-900">
-                    Description
-                  </Label>
-                  <textarea
-                    id="description"
+                  <FormField
+                    control={form.control}
                     name="description"
-                    placeholder="Describe the venue, amenities, etc."
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-900">
+                          Description
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Describe the venue, amenities, etc."
+                            className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
 
-                <div className="flex gap-4 pt-4">
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                  >
-                    {loading ? "Creating Venue..." : "Create Venue"}
-                  </Button>
-                  <Link href="/dashboard">
+                  <div className="flex gap-4 pt-4">
                     <Button
-                      type="button"
-                      variant="outline"
-                      className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                     >
-                      Cancel
+                      {loading ? "Creating Venue..." : "Create Venue"}
                     </Button>
-                  </Link>
-                </div>
-              </form>
+                    <Link href="/dashboard">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                      >
+                        Cancel
+                      </Button>
+                    </Link>
+                  </div>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </div>

@@ -1,30 +1,64 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Zap, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { updateEvent, getEventById } from "@/lib/actions/events";
 import { getVenues } from "@/lib/actions/venues";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+// Form validation schema
+const eventSchema = z.object({
+  name: z.string().min(1, "Event name is required"),
+  description: z.string().optional(),
+  start_date: z.string().min(1, "Start date is required"),
+  end_date: z.string().optional(),
+  sport_type: z.string().min(1, "Sport type is required"),
+  primary_venue_id: z.string().optional(),
+  other_venue_ids: z.array(z.string()).optional(),
+});
+
+type EventFormData = z.infer<typeof eventSchema>;
+
 function EditEventContent() {
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    start_date: "",
-    end_date: "",
-    primary_venue_id: "",
-    other_venue_ids: [] as string[],
-    sport_type: "",
-  });
-  const [venues, setVenues] = useState<any[]>([]);
+  const [venues, setVenues] = useState<
+    Array<{
+      id: string;
+      name: string;
+      address: string;
+      city: string;
+      state?: string;
+      capacity?: number;
+      description?: string;
+      created_by: string;
+    }>
+  >([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const hasFetched = useRef(false);
@@ -32,6 +66,19 @@ function EditEventContent() {
   const params = useParams();
   const { user } = useAuth();
   const eventId = params.id as string;
+
+  const form = useForm<EventFormData>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      start_date: "",
+      end_date: "",
+      sport_type: "",
+      primary_venue_id: "",
+      other_venue_ids: [],
+    },
+  });
 
   // Fetch event and venues data on component mount
   useEffect(() => {
@@ -49,19 +96,26 @@ function EditEventContent() {
           const otherVenues =
             event.venues?.filter((v: any) => !v.is_primary) || [];
 
-          setFormData({
-            name: event.name || "",
-            description: event.description || "",
-            start_date: event.start_date
+          form.setValue("name", event.name || "");
+          form.setValue("description", event.description || "");
+          form.setValue(
+            "start_date",
+            event.start_date
               ? new Date(event.start_date).toISOString().slice(0, 16)
-              : "",
-            end_date: event.end_date
+              : ""
+          );
+          form.setValue(
+            "end_date",
+            event.end_date
               ? new Date(event.end_date).toISOString().slice(0, 16)
-              : "",
-            primary_venue_id: primaryVenue?.id || "",
-            other_venue_ids: otherVenues.map((v: any) => v.id),
-            sport_type: event.sport_type || "",
-          });
+              : ""
+          );
+          form.setValue("primary_venue_id", primaryVenue?.id || "");
+          form.setValue(
+            "other_venue_ids",
+            otherVenues.map((v: any) => v.id)
+          );
+          form.setValue("sport_type", event.sport_type || "");
         } else {
           toast.error("Event not found");
           router.push("/dashboard");
@@ -89,29 +143,28 @@ function EditEventContent() {
     }
   }, [eventId, user]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: EventFormData) => {
     setLoading(true);
 
     try {
       // Combine primary venue and other venues, with primary venue first
       const allVenueIds = [];
-      if (formData.primary_venue_id) {
-        allVenueIds.push(formData.primary_venue_id);
+      if (data.primary_venue_id) {
+        allVenueIds.push(data.primary_venue_id);
       }
       // Add other venues, excluding the primary venue if it's also selected in other venues
-      formData.other_venue_ids.forEach((venueId) => {
-        if (venueId !== formData.primary_venue_id) {
+      data.other_venue_ids?.forEach((venueId) => {
+        if (venueId !== data.primary_venue_id) {
           allVenueIds.push(venueId);
         }
       });
 
       const eventData = {
-        name: formData.name,
-        description: formData.description || undefined,
-        start_date: formData.start_date,
-        end_date: formData.end_date || undefined,
-        sport_type: formData.sport_type,
+        name: data.name,
+        description: data.description || undefined,
+        start_date: data.start_date,
+        end_date: data.end_date || undefined,
+        sport_type: data.sport_type,
         venue_ids: allVenueIds,
       };
 
@@ -128,17 +181,6 @@ function EditEventContent() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
   };
 
   if (initialLoading) {
@@ -188,183 +230,239 @@ function EditEventContent() {
               <p className="text-blue-700">Update your event information</p>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-blue-900">
-                    Event Name *
-                  </Label>
-                  <Input
-                    id="name"
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
+                  <FormField
+                    control={form.control}
                     name="name"
-                    placeholder="e.g., Basketball Tournament"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="sport_type" className="text-blue-900">
-                    Sport Type *
-                  </Label>
-                  <select
-                    id="sport_type"
-                    name="sport_type"
-                    value={formData.sport_type}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  >
-                    <option value="">Select a sport</option>
-                    <option value="Basketball">Basketball</option>
-                    <option value="Football">Football</option>
-                    <option value="Soccer">Soccer</option>
-                    <option value="Tennis">Tennis</option>
-                    <option value="Baseball">Baseball</option>
-                    <option value="Volleyball">Volleyball</option>
-                    <option value="Hockey">Hockey</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_date" className="text-blue-900">
-                      Start Date & Time *
-                    </Label>
-                    <Input
-                      id="start_date"
-                      name="start_date"
-                      type="datetime-local"
-                      value={formData.start_date}
-                      onChange={handleChange}
-                      className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="end_date" className="text-blue-900">
-                      End Date & Time
-                    </Label>
-                    <Input
-                      id="end_date"
-                      name="end_date"
-                      type="datetime-local"
-                      value={formData.end_date}
-                      onChange={handleChange}
-                      className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Primary Venue Section */}
-                <div className="space-y-2">
-                  <Label htmlFor="primary_venue_id" className="text-blue-900">
-                    Primary Venue (Optional)
-                  </Label>
-                  <select
-                    id="primary_venue_id"
-                    name="primary_venue_id"
-                    value={formData.primary_venue_id}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select a primary venue (optional)</option>
-                    {venues.map((venue) => (
-                      <option key={venue.id} value={venue.id}>
-                        {venue.name} - {venue.address}, {venue.city}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Other Venues Section */}
-                <div className="space-y-2">
-                  <Label className="text-blue-900">
-                    Other Venues (Optional - Select Multiple)
-                  </Label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto border border-blue-200 rounded-md p-3">
-                    {venues.length === 0 ? (
-                      <p className="text-gray-500 text-sm">
-                        No venues available. Create a venue first.
-                      </p>
-                    ) : (
-                      venues.map((venue) => (
-                        <label
-                          key={venue.id}
-                          className="flex items-center space-x-2 cursor-pointer hover:bg-blue-50 p-2 rounded"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.other_venue_ids.includes(
-                              venue.id
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFormData({
-                                  ...formData,
-                                  other_venue_ids: [
-                                    ...formData.other_venue_ids,
-                                    venue.id,
-                                  ],
-                                });
-                              } else {
-                                setFormData({
-                                  ...formData,
-                                  other_venue_ids:
-                                    formData.other_venue_ids.filter(
-                                      (id) => id !== venue.id
-                                    ),
-                                });
-                              }
-                            }}
-                            className="rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-900">
+                          Event Name *
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., Basketball Tournament"
+                            className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                            {...field}
                           />
-                          <span className="text-sm text-blue-900">
-                            {venue.name} - {venue.address}, {venue.city}
-                          </span>
-                        </label>
-                      ))
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description" className="text-blue-900">
-                    Description
-                  </Label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    placeholder="Describe the event, rules, requirements, etc."
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
-                </div>
 
-                <div className="flex gap-4 pt-4">
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                  >
-                    {loading ? "Updating Event..." : "Update Event"}
-                  </Button>
-                  <Link href="/dashboard">
+                  <FormField
+                    control={form.control}
+                    name="sport_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-900">
+                          Sport Type *
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                              <SelectValue placeholder="Select a sport" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Basketball">
+                              Basketball
+                            </SelectItem>
+                            <SelectItem value="Football">Football</SelectItem>
+                            <SelectItem value="Soccer">Soccer</SelectItem>
+                            <SelectItem value="Tennis">Tennis</SelectItem>
+                            <SelectItem value="Baseball">Baseball</SelectItem>
+                            <SelectItem value="Volleyball">
+                              Volleyball
+                            </SelectItem>
+                            <SelectItem value="Hockey">Hockey</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="start_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-blue-900">
+                            Start Date & Time *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="datetime-local"
+                              className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="end_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-blue-900">
+                            End Date & Time
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="datetime-local"
+                              className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Primary Venue Section */}
+                  <FormField
+                    control={form.control}
+                    name="primary_venue_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-900">
+                          Primary Venue (Optional)
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                              <SelectValue placeholder="Select a primary venue (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {venues.map((venue) => (
+                              <SelectItem key={venue.id} value={venue.id}>
+                                {venue.name} - {venue.address}, {venue.city}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Other Venues Section */}
+                  <FormField
+                    control={form.control}
+                    name="other_venue_ids"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-900">
+                          Other Venues (Optional - Select Multiple)
+                        </FormLabel>
+                        <FormControl>
+                          <div className="space-y-2 max-h-40 overflow-y-auto border border-blue-200 rounded-md p-3">
+                            {venues.length === 0 ? (
+                              <p className="text-gray-500 text-sm">
+                                No venues available. Create a venue first.
+                              </p>
+                            ) : (
+                              venues.map((venue) => (
+                                <div
+                                  key={venue.id}
+                                  className="flex items-center space-x-2 p-2 rounded hover:bg-blue-50"
+                                >
+                                  <Checkbox
+                                    id={`venue-${venue.id}`}
+                                    checked={
+                                      field.value?.includes(venue.id) || false
+                                    }
+                                    onCheckedChange={(checked) => {
+                                      const currentValues = field.value || [];
+                                      if (checked) {
+                                        field.onChange([
+                                          ...currentValues,
+                                          venue.id,
+                                        ]);
+                                      } else {
+                                        field.onChange(
+                                          currentValues.filter(
+                                            (id) => id !== venue.id
+                                          )
+                                        );
+                                      }
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={`venue-${venue.id}`}
+                                    className="text-sm text-blue-900 cursor-pointer flex-1"
+                                  >
+                                    {venue.name} - {venue.address}, {venue.city}
+                                  </label>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-900">
+                          Description
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Describe the event, rules, requirements, etc."
+                            className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex gap-4 pt-4">
                     <Button
-                      type="button"
-                      variant="outline"
-                      className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                     >
-                      Cancel
+                      {loading ? "Updating Event..." : "Update Event"}
                     </Button>
-                  </Link>
-                </div>
-              </form>
+                    <Link href="/dashboard">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                      >
+                        Cancel
+                      </Button>
+                    </Link>
+                  </div>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </div>

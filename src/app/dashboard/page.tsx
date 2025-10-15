@@ -100,7 +100,7 @@ function DashboardContent() {
     }
   };
 
-  // Fetch all data on initial load
+  // Fetch all data with current filters
   const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
@@ -131,11 +131,6 @@ function DashboardContent() {
     }
   }, [activeTab]);
 
-  // Fetch all data on component mount
-  useEffect(() => {
-    fetchAllData();
-  }, [fetchAllData]);
-
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -154,23 +149,70 @@ function DashboardContent() {
     return () => clearTimeout(timer);
   }, [cityFilter]);
 
+  // Fetch all data on component mount (without filters)
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setLoading(true);
+        const [venuesResult, eventsResult] = await Promise.all([
+          getVenues(),
+          getEvents(),
+        ]);
+
+        if (venuesResult.success) {
+          setVenues(venuesResult.data || []);
+        }
+        if (eventsResult.success) {
+          setEvents(eventsResult.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, []); // Only run on mount
+
   // Refetch data when search or filter parameters change
   useEffect(() => {
     fetchAllData();
-  }, [debouncedSearchQuery, debouncedCityFilter, sportFilter, fetchAllData]);
+  }, [debouncedSearchQuery, debouncedCityFilter, sportFilter]);
 
   // Refresh data when component becomes visible (e.g., returning from add/edit pages)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        fetchAllData();
+        // Fetch fresh data when returning to the page
+        const refreshData = async () => {
+          try {
+            setLoading(true);
+            const [venuesResult, eventsResult] = await Promise.all([
+              getVenues(debouncedSearchQuery, debouncedCityFilter),
+              getEvents(debouncedSearchQuery, sportFilter),
+            ]);
+
+            if (venuesResult.success) {
+              setVenues(venuesResult.data || []);
+            }
+            if (eventsResult.success) {
+              setEvents(eventsResult.data || []);
+            }
+          } catch (error) {
+            console.error("Error refreshing data:", error);
+          } finally {
+            setLoading(false);
+          }
+        };
+        refreshData();
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [fetchAllData]);
+  }, [debouncedSearchQuery, debouncedCityFilter, sportFilter]);
 
   const handleDeleteItem = (
     id: string,
