@@ -31,8 +31,7 @@ export function useConfirmationModal() {
   };
 
   const hideModal = () => {
-    if (modal.isLoading) return;
-    setModal((prev) => ({ ...prev, isOpen: false }));
+    setModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
   };
 
   const setLoading = (isLoading: boolean) => {

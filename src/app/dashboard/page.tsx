@@ -240,6 +240,7 @@ function DashboardContent() {
           toast.success(
             `${type === "venue" ? "Venue" : "Event"} deleted successfully!`
           );
+          setModalLoading(false);
           hideModal();
 
           // Force refresh the data to ensure consistency
@@ -253,6 +254,7 @@ function DashboardContent() {
       } catch {
         toast.error("An unexpected error occurred");
         setModalLoading(false);
+        hideModal();
       }
     };
 
