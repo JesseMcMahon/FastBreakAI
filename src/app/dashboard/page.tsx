@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Zap,
@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GenericConfirmationModal } from "@/components/ui/modal";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { getVenues, deleteVenue } from "@/lib/actions/venues";
+import { getEvents, deleteEvent } from "@/lib/actions/events";
 import { useConfirmationModal } from "@/hooks/useConfirmationModal";
 import toast from "react-hot-toast";
 
@@ -37,11 +38,34 @@ function DashboardContent() {
       created_at: string;
     }>
   >([]);
+  const [events, setEvents] = useState<
+    Array<{
+      id: string;
+      name: string;
+      description?: string;
+      start_date: string;
+      end_date?: string;
+      sport_type: string;
+      created_at: string;
+      venues?: Array<{
+        id: string;
+        name: string;
+        address: string;
+        city: string;
+        state?: string;
+        is_primary: boolean;
+      }>;
+      primary_venue?: {
+        id: string;
+        name: string;
+        address: string;
+        city: string;
+        state?: string;
+      };
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
-  const [venueToDelete, setVenueToDelete] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+  const [activeTab, setActiveTab] = useState<"venues" | "events">("events");
   const {
     modal,
     showModal,
@@ -64,58 +88,116 @@ function DashboardContent() {
     }
   };
 
-  // Fetch venues on component mount
-  useEffect(() => {
-    fetchVenues();
+  // Fetch events function
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const result = await getEvents();
+      if (result.success) {
+        setEvents(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch all data on initial load
+  const fetchAllData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [venuesResult, eventsResult] = await Promise.all([
+        getVenues(),
+        getEvents(),
+      ]);
+
+      if (venuesResult.success) {
+        setVenues(venuesResult.data || []);
+      }
+      if (eventsResult.success) {
+        setEvents(eventsResult.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Refresh venues when component becomes visible (e.g., returning from add venue page)
+  // Fetch data based on active tab (for tab switching)
+  const fetchData = useCallback(async () => {
+    if (activeTab === "venues") {
+      await fetchVenues();
+    } else {
+      await fetchEvents();
+    }
+  }, [activeTab]);
+
+  // Fetch all data on component mount
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  // Refresh data when component becomes visible (e.g., returning from add/edit pages)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        fetchVenues();
+        fetchAllData();
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
+  }, [fetchAllData]);
 
-  const handleDeleteVenue = (venueId: string, venueName: string) => {
-    setVenueToDelete({ id: venueId, name: venueName });
-
+  const handleDeleteItem = (
+    id: string,
+    name: string,
+    type: "venue" | "event"
+  ) => {
     // Create a function that will be called when confirm is clicked
     const handleConfirm = async () => {
       setModalLoading(true);
 
       try {
-        const result = await deleteVenue(venueId);
+        let result;
+        if (type === "venue") {
+          result = await deleteVenue(id);
+        } else {
+          result = await deleteEvent(id);
+        }
 
         if (result.success) {
-          setVenues(venues.filter((venue) => venue.id !== venueId));
-          toast.success("Venue deleted successfully!");
-          setVenueToDelete(null);
+          if (type === "venue") {
+            setVenues(venues.filter((venue) => venue.id !== id));
+          } else {
+            setEvents(events.filter((event) => event.id !== id));
+          }
+          toast.success(
+            `${type === "venue" ? "Venue" : "Event"} deleted successfully!`
+          );
           hideModal();
 
-          // Force refresh the venues list to ensure consistency
+          // Force refresh the data to ensure consistency
           setTimeout(() => {
-            fetchVenues();
+            fetchData();
           }, 1000);
         } else {
-          toast.error(result.error || "Failed to delete venue");
+          toast.error(result.error || `Failed to delete ${type}`);
           setModalLoading(false);
         }
-      } catch (error) {
+      } catch {
         toast.error("An unexpected error occurred");
         setModalLoading(false);
       }
     };
 
     showModal({
-      title: "Delete Venue",
-      description: `Are you sure you want to delete "${venueName}"? This action cannot be undone.`,
-      confirmText: "Delete Venue",
+      title: `Delete ${type === "venue" ? "Venue" : "Event"}`,
+      description: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      confirmText: `Delete ${type === "venue" ? "Venue" : "Event"}`,
       cancelText: "Cancel",
       onConfirm: handleConfirm,
       isLoading: false,
@@ -178,10 +260,12 @@ function DashboardContent() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-blue-600 text-center">
-                  0
+                  {loading ? "..." : events.length}
                 </p>
                 <p className="text-blue-700 text-center text-sm">
-                  No events yet
+                  {events.length === 0
+                    ? "No events yet"
+                    : `${events.length} event${events.length === 1 ? "" : "s"}`}
                 </p>
               </CardContent>
             </Card>
@@ -234,10 +318,12 @@ function DashboardContent() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white h-12">
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Create New Event
-                </Button>
+                <Link href="/events/add">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white h-12 w-full">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Create New Event
+                  </Button>
+                </Link>
                 <Link href="/venues/add">
                   <Button
                     variant="outline"
@@ -251,15 +337,39 @@ function DashboardContent() {
             </CardContent>
           </Card>
 
-          {/* Venues List */}
+          {/* Toggle and Content */}
           <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg mt-8">
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl text-blue-900">
-                  Your Venues
-                </CardTitle>
+                <div className="flex items-center space-x-4">
+                  <CardTitle className="text-2xl text-blue-900">
+                    Your {activeTab === "venues" ? "Venues" : "Events"}
+                  </CardTitle>
+                  <div className="flex bg-blue-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setActiveTab("events")}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === "events"
+                          ? "bg-white text-blue-900 shadow-sm"
+                          : "text-blue-700 hover:text-blue-900"
+                      }`}
+                    >
+                      Events
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("venues")}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === "venues"
+                          ? "bg-white text-blue-900 shadow-sm"
+                          : "text-blue-700 hover:text-blue-900"
+                      }`}
+                    >
+                      Venues
+                    </button>
+                  </div>
+                </div>
                 <Button
-                  onClick={fetchVenues}
+                  onClick={fetchAllData}
                   disabled={loading}
                   variant="outline"
                   size="sm"
@@ -272,40 +382,108 @@ function DashboardContent() {
             <CardContent>
               {loading ? (
                 <div className="text-center py-8">
-                  <p className="text-blue-700">Loading venues...</p>
+                  <p className="text-blue-700">Loading {activeTab}...</p>
                 </div>
-              ) : venues.length === 0 ? (
+              ) : activeTab === "venues" ? (
+                venues.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MapPin className="w-12 h-12 text-blue-300 mx-auto mb-4" />
+                    <p className="text-blue-700 text-lg mb-4">No venues yet</p>
+                    <p className="text-blue-600 text-sm mb-6">
+                      Create your first venue to get started
+                    </p>
+                    <Link href="/venues/add">
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Add Your First Venue
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {venues.map((venue) => (
+                      <div
+                        key={venue.id}
+                        className="border border-blue-200 rounded-lg p-4 bg-white/50 hover:bg-white/70 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-semibold text-blue-900 text-lg">
+                            {venue.name}
+                          </h3>
+                          <div className="flex space-x-2">
+                            <Link href={`/venues/edit/${venue.id}`}>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-blue-600 hover:bg-blue-50 p-1 h-8 w-8"
+                                title="Edit venue"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </Link>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                handleDeleteItem(venue.id, venue.name, "venue")
+                              }
+                              className="text-red-600 hover:bg-red-50 p-1 h-8 w-8"
+                              title="Delete venue"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-blue-700 text-sm mb-2">
+                          {venue.address}, {venue.city}
+                          {venue.state && `, ${venue.state}`}
+                        </p>
+                        {venue.capacity && (
+                          <p className="text-blue-600 text-sm mb-2">
+                            Capacity: {venue.capacity.toLocaleString()}
+                          </p>
+                        )}
+                        {venue.description && (
+                          <p className="text-gray-600 text-sm line-clamp-2">
+                            {venue.description}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : events.length === 0 ? (
                 <div className="text-center py-8">
-                  <MapPin className="w-12 h-12 text-blue-300 mx-auto mb-4" />
-                  <p className="text-blue-700 text-lg mb-4">No venues yet</p>
+                  <Calendar className="w-12 h-12 text-blue-300 mx-auto mb-4" />
+                  <p className="text-blue-700 text-lg mb-4">No events yet</p>
                   <p className="text-blue-600 text-sm mb-6">
-                    Create your first venue to get started
+                    Create your first event to get started
                   </p>
-                  <Link href="/venues/add">
+                  <Link href="/events/add">
                     <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Add Your First Venue
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Create Your First Event
                     </Button>
                   </Link>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {venues.map((venue) => (
+                  {events.map((event) => (
                     <div
-                      key={venue.id}
+                      key={event.id}
                       className="border border-blue-200 rounded-lg p-4 bg-white/50 hover:bg-white/70 transition-colors"
                     >
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="font-semibold text-blue-900 text-lg">
-                          {venue.name}
+                          {event.name}
                         </h3>
                         <div className="flex space-x-2">
-                          <Link href={`/venues/edit/${venue.id}`}>
+                          <Link href={`/events/edit/${event.id}`}>
                             <Button
                               size="sm"
                               variant="ghost"
                               className="text-blue-600 hover:bg-blue-50 p-1 h-8 w-8"
-                              title="Edit venue"
+                              title="Edit event"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -314,27 +492,38 @@ function DashboardContent() {
                             size="sm"
                             variant="ghost"
                             onClick={() =>
-                              handleDeleteVenue(venue.id, venue.name)
+                              handleDeleteItem(event.id, event.name, "event")
                             }
                             className="text-red-600 hover:bg-red-50 p-1 h-8 w-8"
-                            title="Delete venue"
+                            title="Delete event"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
+                      <div className="flex items-center text-blue-600 text-sm mb-2">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {event.primary_venue ? (
+                          <span>
+                            {event.primary_venue.name} -{" "}
+                            {event.primary_venue.city}
+                            {event.venues && event.venues.length > 1 && (
+                              <span className="text-blue-500 ml-1">
+                                (+{event.venues.length - 1} more)
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span>Venue TBD</span>
+                        )}
+                      </div>
                       <p className="text-blue-700 text-sm mb-2">
-                        {venue.address}, {venue.city}
-                        {venue.state && `, ${venue.state}`}
+                        {event.sport_type} •{" "}
+                        {new Date(event.start_date).toLocaleDateString()}
                       </p>
-                      {venue.capacity && (
-                        <p className="text-blue-600 text-sm mb-2">
-                          Capacity: {venue.capacity.toLocaleString()}
-                        </p>
-                      )}
-                      {venue.description && (
+                      {event.description && (
                         <p className="text-gray-600 text-sm line-clamp-2">
-                          {venue.description}
+                          {event.description}
                         </p>
                       )}
                     </div>
