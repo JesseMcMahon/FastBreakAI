@@ -18,12 +18,15 @@ export default function Home() {
         </div>
         <div className="flex items-center space-x-4">
           <Link href="/login">
-            <Button variant="ghost" className="text-blue-700 hover:bg-blue-50">
+            <Button
+              variant="ghost"
+              className="text-blue-700 hover:bg-blue-50 cursor-pointer"
+            >
               Sign In
             </Button>
           </Link>
           <Link href="/signup">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
               Get Started
             </Button>
           </Link>
@@ -50,7 +53,7 @@ export default function Home() {
             <Link href="/signup">
               <Button
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg cursor-pointer"
               >
                 Start Free Trial
               </Button>
@@ -59,7 +62,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg"
+                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg cursor-pointer"
               >
                 Sign In
               </Button>
