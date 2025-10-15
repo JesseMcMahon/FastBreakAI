@@ -33,15 +33,12 @@ function AddEventContent() {
   // Fetch venues function
   const fetchVenues = async () => {
     try {
-      console.log("Fetching venues for user:", user?.id);
       const result = await getVenues();
-      console.log("Venues result:", result);
       if (result.success && result.data) {
         // Filter venues to only show those created by the current user
         const userVenues = result.data.filter(
           (venue: any) => venue.created_by === user?.id
         );
-        console.log("User venues:", userVenues);
         setVenues(userVenues);
       }
     } catch (error) {
@@ -53,7 +50,6 @@ function AddEventContent() {
 
   // Fetch venues on component mount
   useEffect(() => {
-    console.log("useEffect triggered, user:", user);
     if (user) {
       fetchVenues();
     }
@@ -64,11 +60,9 @@ function AddEventContent() {
 
     // Prevent multiple submissions
     if (loading) {
-      console.log("Already submitting, ignoring duplicate submission");
       return;
     }
 
-    console.log("Submitting event form...");
     setLoading(true);
 
     try {
@@ -94,9 +88,7 @@ function AddEventContent() {
         venue_ids: allVenueIds,
       };
 
-      console.log("Event data:", eventData);
       const result = await createEvent(eventData);
-      console.log("Create event result:", result);
 
       if (result.success) {
         toast.success("Event created successfully!");
@@ -193,15 +185,25 @@ function AddEventContent() {
                   <Label htmlFor="sport_type" className="text-blue-900">
                     Sport Type *
                   </Label>
-                  <Input
+                  {/* Sport type dropdown */}
+                  <select
                     id="sport_type"
                     name="sport_type"
-                    placeholder="e.g., Basketball, Soccer, Tennis"
                     value={formData.sport_type}
                     onChange={handleChange}
-                    className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
-                  />
+                  >
+                    <option value="">Select a sport</option>
+                    <option value="Basketball">Basketball</option>
+                    <option value="Football">Football</option>
+                    <option value="Soccer">Soccer</option>
+                    <option value="Tennis">Tennis</option>
+                    <option value="Baseball">Baseball</option>
+                    <option value="Volleyball">Volleyball</option>
+                    <option value="Hockey">Hockey</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

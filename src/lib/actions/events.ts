@@ -16,7 +16,6 @@ export interface EventData {
 export async function createEvent(
   eventData: EventData & { venue_ids?: string[] }
 ) {
-  console.log("Server: Creating event with data:", eventData);
   const supabase = createServerClient();
 
   try {
@@ -29,13 +28,6 @@ export async function createEvent(
       .insert(eventDataWithoutVenues)
       .select()
       .single();
-
-    console.log(
-      "Server: Event insert result - data:",
-      event,
-      "error:",
-      eventError
-    );
 
     if (eventError) {
       console.error("Server: Event insert error:", eventError);
@@ -50,8 +42,6 @@ export async function createEvent(
         is_primary: index === 0, // First venue is primary
       }));
 
-      console.log("Server: Inserting event venues:", eventVenues);
-
       const { error: venuesError } = await supabase
         .from("event_venues")
         .insert(eventVenues);
@@ -60,13 +50,8 @@ export async function createEvent(
         console.error("Server: Venues insert error:", venuesError);
         throw new Error(venuesError.message);
       }
-
-      console.log("Server: Event venues inserted successfully");
-    } else {
-      console.log("Server: No venues to associate with event");
     }
 
-    console.log("Server: Event created successfully");
     revalidatePath("/dashboard");
     return { success: true, data: event };
   } catch (error) {
