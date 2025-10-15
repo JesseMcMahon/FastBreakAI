@@ -38,14 +38,28 @@ export async function createVenue(venueData: VenueData) {
   }
 }
 
-export async function getVenues() {
+export async function getVenues(searchQuery?: string, cityFilter?: string) {
   const supabase = createServerClient();
 
   try {
-    const { data, error } = await supabase
-      .from("venues")
-      .select("*")
-      .order("created_at", { ascending: false });
+    let query = supabase.from("venues").select("*");
+
+    // Apply search filter
+    if (searchQuery && searchQuery.trim()) {
+      const searchTerm = `%${searchQuery.trim()}%`;
+      query = query.or(
+        `name.ilike.${searchTerm},address.ilike.${searchTerm},description.ilike.${searchTerm}`
+      );
+    }
+
+    // Apply city filter
+    if (cityFilter && cityFilter.trim()) {
+      query = query.ilike("city", `%${cityFilter.trim()}%`);
+    }
+
+    const { data, error } = await query.order("created_at", {
+      ascending: false,
+    });
 
     if (error) {
       throw new Error(error.message);

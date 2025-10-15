@@ -78,14 +78,12 @@ export async function createEvent(
   }
 }
 
-export async function getEvents() {
+export async function getEvents(searchQuery?: string, sportFilter?: string) {
   const supabase = createServerClient();
 
   try {
-    const { data, error } = await supabase
-      .from("events")
-      .select(
-        `
+    let query = supabase.from("events").select(
+      `
         *,
         event_venues (
           is_primary,
@@ -98,8 +96,24 @@ export async function getEvents() {
           )
         )
       `
-      )
-      .order("start_date", { ascending: true });
+    );
+
+    // Apply search filter
+    if (searchQuery && searchQuery.trim()) {
+      const searchTerm = `%${searchQuery.trim()}%`;
+      query = query.or(
+        `name.ilike.${searchTerm},description.ilike.${searchTerm}`
+      );
+    }
+
+    // Apply sport filter
+    if (sportFilter && sportFilter.trim()) {
+      query = query.eq("sport_type", sportFilter);
+    }
+
+    const { data, error } = await query.order("start_date", {
+      ascending: true,
+    });
 
     if (error) {
       throw new Error(error.message);

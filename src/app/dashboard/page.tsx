@@ -4,15 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import {
-  Zap,
-  LogOut,
-  Calendar,
-  MapPin,
-  BarChart3,
-  Trash2,
-  Edit,
-} from "lucide-react";
+import { Zap, LogOut, Calendar, MapPin, Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GenericConfirmationModal } from "@/components/ui/modal";
@@ -66,6 +58,11 @@ function DashboardContent() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"venues" | "events">("events");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [sportFilter, setSportFilter] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [debouncedCityFilter, setDebouncedCityFilter] = useState("");
   const {
     modal,
     showModal,
@@ -77,7 +74,7 @@ function DashboardContent() {
   const fetchVenues = async () => {
     try {
       setLoading(true);
-      const result = await getVenues();
+      const result = await getVenues(debouncedSearchQuery, debouncedCityFilter);
       if (result.success) {
         setVenues(result.data || []);
       }
@@ -92,7 +89,7 @@ function DashboardContent() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const result = await getEvents();
+      const result = await getEvents(debouncedSearchQuery, sportFilter);
       if (result.success) {
         setEvents(result.data || []);
       }
@@ -108,8 +105,8 @@ function DashboardContent() {
     try {
       setLoading(true);
       const [venuesResult, eventsResult] = await Promise.all([
-        getVenues(),
-        getEvents(),
+        getVenues(debouncedSearchQuery, debouncedCityFilter),
+        getEvents(debouncedSearchQuery, sportFilter),
       ]);
 
       if (venuesResult.success) {
@@ -123,7 +120,7 @@ function DashboardContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [debouncedSearchQuery, debouncedCityFilter, sportFilter]);
 
   // Fetch data based on active tab (for tab switching)
   const fetchData = useCallback(async () => {
@@ -138,6 +135,29 @@ function DashboardContent() {
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Debounce city filter
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCityFilter(cityFilter);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [cityFilter]);
+
+  // Refetch data when search or filter parameters change
+  useEffect(() => {
+    fetchAllData();
+  }, [debouncedSearchQuery, debouncedCityFilter, sportFilter, fetchAllData]);
 
   // Refresh data when component becomes visible (e.g., returning from add/edit pages)
   useEffect(() => {
@@ -248,7 +268,7 @@ function DashboardContent() {
           <h1 className="text-3xl font-bold text-blue-900 mb-8">Dashboard</h1>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
               <CardHeader className="text-center">
                 <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
@@ -288,25 +308,6 @@ function DashboardContent() {
                 </p>
               </CardContent>
             </Card>
-
-            <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
-                  <BarChart3 className="w-6 h-6 text-white" />
-                </div>
-                <CardTitle className="text-xl text-blue-900">
-                  This Month
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-blue-600 text-center">
-                  0
-                </p>
-                <p className="text-blue-700 text-center text-sm">
-                  Events this month
-                </p>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Quick Actions */}
@@ -333,6 +334,85 @@ function DashboardContent() {
                     Add Venue
                   </Button>
                 </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Search and Filter */}
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg mt-8">
+            <CardHeader>
+              <CardTitle className="text-xl text-blue-900">
+                Search & Filter
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[120px]">
+                {/* Search Input */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-blue-900">
+                    Search
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={`Search ${activeTab}...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Filter Section - Fixed Height */}
+                <div className="space-y-2 min-h-[80px]">
+                  <label className="text-sm font-medium text-blue-900">
+                    {activeTab === "events" ? "Sport Type" : "City"}
+                  </label>
+
+                  {/* Sport Filter (for events) */}
+                  {activeTab === "events" ? (
+                    <select
+                      value={sportFilter}
+                      onChange={(e) => setSportFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">All Sports</option>
+                      <option value="Basketball">Basketball</option>
+                      <option value="Football">Football</option>
+                      <option value="Soccer">Soccer</option>
+                      <option value="Tennis">Tennis</option>
+                      <option value="Baseball">Baseball</option>
+                      <option value="Volleyball">Volleyball</option>
+                      <option value="Hockey">Hockey</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="Filter by city..."
+                      value={cityFilter}
+                      onChange={(e) => setCityFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  )}
+                </div>
+
+                {/* Clear Filters Button */}
+                <div className="space-y-2 min-h-[80px]">
+                  <label className="text-sm font-medium text-blue-900">
+                    Actions
+                  </label>
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setDebouncedSearchQuery("");
+                      setSportFilter("");
+                      setCityFilter("");
+                      setDebouncedCityFilter("");
+                    }}
+                    className="w-full px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -379,25 +459,32 @@ function DashboardContent() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="min-h-[400px]">
               {loading ? (
-                <div className="text-center py-8">
-                  <p className="text-blue-700">Loading {activeTab}...</p>
+                <div className="flex items-center justify-center h-full min-h-[400px]">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-blue-700">Loading {activeTab}...</p>
+                  </div>
                 </div>
               ) : activeTab === "venues" ? (
                 venues.length === 0 ? (
-                  <div className="text-center py-8">
-                    <MapPin className="w-12 h-12 text-blue-300 mx-auto mb-4" />
-                    <p className="text-blue-700 text-lg mb-4">No venues yet</p>
-                    <p className="text-blue-600 text-sm mb-6">
-                      Create your first venue to get started
-                    </p>
-                    <Link href="/venues/add">
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        Add Your First Venue
-                      </Button>
-                    </Link>
+                  <div className="flex items-center justify-center h-full min-h-[400px]">
+                    <div className="text-center">
+                      <MapPin className="w-12 h-12 text-blue-300 mx-auto mb-4" />
+                      <p className="text-blue-700 text-lg mb-4">
+                        No venues yet
+                      </p>
+                      <p className="text-blue-600 text-sm mb-6">
+                        Create your first venue to get started
+                      </p>
+                      <Link href="/venues/add">
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          Add Your First Venue
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -453,18 +540,20 @@ function DashboardContent() {
                   </div>
                 )
               ) : events.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="w-12 h-12 text-blue-300 mx-auto mb-4" />
-                  <p className="text-blue-700 text-lg mb-4">No events yet</p>
-                  <p className="text-blue-600 text-sm mb-6">
-                    Create your first event to get started
-                  </p>
-                  <Link href="/events/add">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Create Your First Event
-                    </Button>
-                  </Link>
+                <div className="flex items-center justify-center h-full min-h-[400px]">
+                  <div className="text-center">
+                    <Calendar className="w-12 h-12 text-blue-300 mx-auto mb-4" />
+                    <p className="text-blue-700 text-lg mb-4">No events yet</p>
+                    <p className="text-blue-600 text-sm mb-6">
+                      Create your first event to get started
+                    </p>
+                    <Link href="/events/add">
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Create Your First Event
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
