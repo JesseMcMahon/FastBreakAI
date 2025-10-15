@@ -167,7 +167,10 @@ function EditEventContent() {
           </span>
         </div>
         <Link href="/dashboard">
-          <Button variant="ghost" className="text-blue-700 hover:bg-blue-50">
+          <Button
+            variant="ghost"
+            className="text-blue-700 hover:bg-blue-50 cursor-pointer"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Button>
@@ -338,7 +341,7 @@ function EditEventContent() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                   >
                     {loading ? "Updating Event..." : "Update Event"}
                   </Button>
@@ -346,7 +349,7 @@ function EditEventContent() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                      className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
                     >
                       Cancel
                     </Button>

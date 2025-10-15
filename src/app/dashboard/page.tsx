@@ -267,8 +267,8 @@ function DashboardContent() {
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold text-blue-900 mb-8">Dashboard</h1>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Quick Stats and Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
               <CardHeader className="text-center">
                 <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
@@ -308,35 +308,38 @@ function DashboardContent() {
                 </p>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Quick Actions */}
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl text-blue-900">
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Link href="/events/add">
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white h-12 w-full">
-                    <Calendar className="w-5 h-5 mr-2" />
-                    Create New Event
-                  </Button>
-                </Link>
-                <Link href="/venues/add">
-                  <Button
-                    variant="outline"
-                    className="border-blue-600 text-blue-600 hover:bg-blue-50 h-12 w-full"
-                  >
-                    <MapPin className="w-5 h-5 mr-2" />
-                    Add Venue
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Quick Actions */}
+            <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
+                  <Zap className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle className="text-xl text-blue-900">
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pb-6">
+                <div>
+                  <Link href="/events/add">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white h-12 w-full transition-all duration-200 hover:shadow-md mb-4 cursor-pointer">
+                      <Calendar className="w-5 h-5 mr-3" />
+                      <span className="font-medium">Create Event</span>
+                    </Button>
+                  </Link>
+                  <Link href="/venues/add">
+                    <Button
+                      variant="outline"
+                      className="border-blue-600 text-blue-600 hover:bg-blue-50 hover:border-blue-700 h-12 w-full transition-all duration-200 hover:shadow-md cursor-pointer"
+                    >
+                      <MapPin className="w-5 h-5 mr-3" />
+                      <span className="font-medium">Add Venue</span>
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Search and Filter */}
           <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg mt-8">
@@ -408,7 +411,7 @@ function DashboardContent() {
                       setCityFilter("");
                       setDebouncedCityFilter("");
                     }}
-                    className="w-full px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                    className="w-full px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
                   >
                     Clear All Filters
                   </button>
@@ -428,7 +431,7 @@ function DashboardContent() {
                   <div className="flex bg-blue-100 rounded-lg p-1">
                     <button
                       onClick={() => setActiveTab("events")}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                         activeTab === "events"
                           ? "bg-white text-blue-900 shadow-sm"
                           : "text-blue-700 hover:text-blue-900"
@@ -438,7 +441,7 @@ function DashboardContent() {
                     </button>
                     <button
                       onClick={() => setActiveTab("venues")}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                         activeTab === "venues"
                           ? "bg-white text-blue-900 shadow-sm"
                           : "text-blue-700 hover:text-blue-900"
@@ -453,7 +456,7 @@ function DashboardContent() {
                   disabled={loading}
                   variant="outline"
                   size="sm"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
                 >
                   {loading ? "Refreshing..." : "Refresh"}
                 </Button>
@@ -479,7 +482,7 @@ function DashboardContent() {
                         Create your first venue to get started
                       </p>
                       <Link href="/venues/add">
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
                           <MapPin className="w-4 h-4 mr-2" />
                           Add Your First Venue
                         </Button>
@@ -502,7 +505,7 @@ function DashboardContent() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-blue-600 hover:bg-blue-50 p-1 h-8 w-8"
+                                className="text-blue-600 hover:bg-blue-50 p-1 h-8 w-8 cursor-pointer"
                                 title="Edit venue"
                               >
                                 <Edit className="w-4 h-4" />
@@ -514,7 +517,7 @@ function DashboardContent() {
                               onClick={() =>
                                 handleDeleteItem(venue.id, venue.name, "venue")
                               }
-                              className="text-red-600 hover:bg-red-50 p-1 h-8 w-8"
+                              className="text-red-600 hover:bg-red-50 p-1 h-8 w-8 cursor-pointer"
                               title="Delete venue"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -548,7 +551,7 @@ function DashboardContent() {
                       Create your first event to get started
                     </p>
                     <Link href="/events/add">
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
                         <Calendar className="w-4 h-4 mr-2" />
                         Create Your First Event
                       </Button>
@@ -571,7 +574,7 @@ function DashboardContent() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-blue-600 hover:bg-blue-50 p-1 h-8 w-8"
+                              className="text-blue-600 hover:bg-blue-50 p-1 h-8 w-8 cursor-pointer"
                               title="Edit event"
                             >
                               <Edit className="w-4 h-4" />
@@ -583,7 +586,7 @@ function DashboardContent() {
                             onClick={() =>
                               handleDeleteItem(event.id, event.name, "event")
                             }
-                            className="text-red-600 hover:bg-red-50 p-1 h-8 w-8"
+                            className="text-red-600 hover:bg-red-50 p-1 h-8 w-8 cursor-pointer"
                             title="Delete event"
                           >
                             <Trash2 className="w-4 h-4" />

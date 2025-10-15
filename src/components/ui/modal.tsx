@@ -48,7 +48,7 @@ export function ConfirmationModal({
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-8 w-8 p-0 hover:bg-gray-100"
+            className="h-8 w-8 p-0 hover:bg-gray-100 cursor-pointer"
             disabled={isLoading}
           >
             <X className="h-4 w-4" />
@@ -65,7 +65,7 @@ export function ConfirmationModal({
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
             >
               {cancelText}
             </Button>
@@ -75,8 +75,8 @@ export function ConfirmationModal({
               variant={variant === "destructive" ? "destructive" : "default"}
               className={
                 variant === "destructive"
-                  ? "bg-red-600 hover:bg-red-700 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
+                  ? "bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                  : "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
               }
             >
               {isLoading ? "Processing..." : confirmText}
