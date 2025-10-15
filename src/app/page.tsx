@@ -1,102 +1,144 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Calendar, MapPin, BarChart3, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+      {/* Navigation */}
+      <nav className="flex items-center justify-between p-6 lg:px-8 bg-white/80 backdrop-blur-sm border-b border-blue-200">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+            <Zap className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-2xl font-bold text-blue-900">
+            Sports Connect
+          </span>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Link href="/login">
+            <Button variant="ghost" className="text-blue-700 hover:bg-blue-50">
+              Sign In
+            </Button>
+          </Link>
+          <Link href="/signup">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              Get Started
+            </Button>
+          </Link>
+        </div>
+      </nav>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Hero Section */}
+      <main className="flex flex-col items-center justify-center px-6 py-20 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-5xl md:text-7xl font-bold text-blue-900 mb-6 leading-tight">
+            Manage Sports Events
+            <span className="block bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              Like a Pro
+            </span>
+          </h1>
+
+          <p className="text-xl md:text-2xl text-blue-700 mb-12 max-w-3xl mx-auto leading-relaxed">
+            Create, organize, and manage sports events with ease. From
+            basketball tournaments to soccer leagues, Sports Connect has
+            everything you need to run successful sporting events.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link href="/signup">
+              <Button
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg"
+              >
+                Start Free Trial
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg"
+              >
+                Sign In
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 max-w-6xl mx-auto">
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
+            <CardHeader className="text-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
+                <Calendar className="w-6 h-6 text-white" />
+              </div>
+              <CardTitle className="text-xl text-blue-900">
+                Event Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-blue-700 text-center">
+                Create and manage sports events with detailed scheduling, venue
+                information, and participant tracking.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
+            <CardHeader className="text-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
+                <MapPin className="w-6 h-6 text-white" />
+              </div>
+              <CardTitle className="text-xl text-blue-900">
+                Venue Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-blue-700 text-center">
+                Manage multiple venues with capacity tracking, location details,
+                and availability scheduling.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
+            <CardHeader className="text-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+              <CardTitle className="text-xl text-blue-900">
+                Analytics & Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-blue-700 text-center">
+                Track event performance, attendance patterns, and get insights
+                to improve your sports events.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      {/* Footer */}
+      <footer className="mt-20 border-t border-blue-200 bg-white/50">
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+              <div className="w-6 h-6 bg-gradient-to-r from-blue-600 to-blue-800 rounded flex items-center justify-center">
+                <Zap className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-semibold text-blue-900">
+                Sports Connect
+              </span>
+            </div>
+            <p className="text-blue-600 text-sm">
+              © 2025 Sports Connect. All rights reserved.
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
