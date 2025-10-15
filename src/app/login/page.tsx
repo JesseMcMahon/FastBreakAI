@@ -62,14 +62,17 @@ export default function SignIn() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-2">
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer bg-transparent border-none p-0"
+          >
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
             <span className="text-2xl font-bold text-blue-900">
               Sports Connect
             </span>
-          </div>
+          </button>
         </div>
 
         {/* Sign In Form */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -135,6 +135,7 @@ function EditEventContent() {
           setVenues(userVenues);
         }
       } catch (error) {
+        console.error("Error loading event data:", error);
         toast.error("Failed to load event data");
         router.push("/dashboard");
       } finally {
@@ -145,7 +146,7 @@ function EditEventContent() {
     if (eventId && user) {
       fetchData();
     }
-  }, [eventId, user]);
+  }, [eventId, user, form, router]);
 
   const onSubmit = async (data: EventFormData) => {
     setLoading(true);
@@ -204,14 +205,17 @@ function EditEventContent() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
       {/* Navigation */}
       <nav className="flex items-center justify-between p-6 lg:px-8 bg-white/80 backdrop-blur-sm border-b border-blue-200">
-        <div className="flex items-center space-x-2">
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer bg-transparent border-none p-0"
+        >
           <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
             <Zap className="w-5 h-5 text-white" />
           </div>
           <span className="text-2xl font-bold text-blue-900">
             Sports Connect
           </span>
-        </div>
+        </button>
         <Link href="/dashboard">
           <Button
             variant="ghost"
