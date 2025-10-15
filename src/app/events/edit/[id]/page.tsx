@@ -92,9 +92,13 @@ function EditEventContent() {
         if (eventResult.success && eventResult.data) {
           const event = eventResult.data;
           // Separate primary venue from other venues
-          const primaryVenue = event.venues?.find((v: { is_primary: boolean }) => v.is_primary);
+          const primaryVenue = event.venues?.find(
+            (v: { is_primary: boolean }) => v.is_primary
+          );
           const otherVenues =
-            event.venues?.filter((v: { is_primary: boolean }) => !v.is_primary) || [];
+            event.venues?.filter(
+              (v: { is_primary: boolean }) => !v.is_primary
+            ) || [];
 
           form.setValue("name", event.name || "");
           form.setValue("description", event.description || "");

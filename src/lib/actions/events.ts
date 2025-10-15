@@ -116,17 +116,21 @@ export async function getEvents(searchQuery?: string, sportFilter?: string) {
     }
 
     // Transform the data to flatten venues array
-        const transformedData =
-          data?.map((event) => ({
-            ...event,
-            venues:
-              event.event_venues?.map((ev: { is_primary: boolean; venues: VenueData }) => ({
-                ...ev.venues,
-                is_primary: ev.is_primary,
-              })) || [],
-            primary_venue:
-              event.event_venues?.find((ev: { is_primary: boolean; venues: VenueData }) => ev.is_primary)?.venues || null,
-          })) || [];
+    const transformedData =
+      data?.map((event) => ({
+        ...event,
+        venues:
+          event.event_venues?.map(
+            (ev: { is_primary: boolean; venues: VenueData }) => ({
+              ...ev.venues,
+              is_primary: ev.is_primary,
+            })
+          ) || [],
+        primary_venue:
+          event.event_venues?.find(
+            (ev: { is_primary: boolean; venues: VenueData }) => ev.is_primary
+          )?.venues || null,
+      })) || [];
 
     return { success: true, data: transformedData };
   } catch (error) {
@@ -170,12 +174,16 @@ export async function getEventById(id: string) {
     const transformedData = {
       ...data,
       venues:
-        data.event_venues?.map((ev: { is_primary: boolean; venues: VenueData }) => ({
-          ...ev.venues,
-          is_primary: ev.is_primary,
-        })) || [],
+        data.event_venues?.map(
+          (ev: { is_primary: boolean; venues: VenueData }) => ({
+            ...ev.venues,
+            is_primary: ev.is_primary,
+          })
+        ) || [],
       primary_venue:
-        data.event_venues?.find((ev: { is_primary: boolean; venues: VenueData }) => ev.is_primary)?.venues || null,
+        data.event_venues?.find(
+          (ev: { is_primary: boolean; venues: VenueData }) => ev.is_primary
+        )?.venues || null,
     };
 
     return { success: true, data: transformedData };
