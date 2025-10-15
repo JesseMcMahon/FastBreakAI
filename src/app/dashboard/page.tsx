@@ -2,16 +2,126 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Zap, LogOut, Calendar, MapPin, BarChart3 } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  Zap,
+  LogOut,
+  Calendar,
+  MapPin,
+  BarChart3,
+  Trash2,
+  Edit,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GenericConfirmationModal } from "@/components/ui/modal";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { getVenues, deleteVenue } from "@/lib/actions/venues";
+import { useConfirmationModal } from "@/hooks/useConfirmationModal";
+import toast from "react-hot-toast";
 
 function DashboardContent() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
+  const [venues, setVenues] = useState<
+    Array<{
+      id: string;
+      name: string;
+      address: string;
+      city: string;
+      state?: string;
+      capacity?: number;
+      description?: string;
+      created_at: string;
+    }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [venueToDelete, setVenueToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const {
+    modal,
+    showModal,
+    hideModal,
+    setLoading: setModalLoading,
+  } = useConfirmationModal();
+
+  // Fetch venues function
+  const fetchVenues = async () => {
+    try {
+      setLoading(true);
+      const result = await getVenues();
+      if (result.success) {
+        setVenues(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching venues:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch venues on component mount
+  useEffect(() => {
+    fetchVenues();
+  }, []);
+
+  // Refresh venues when component becomes visible (e.g., returning from add venue page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchVenues();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  const handleDeleteVenue = (venueId: string, venueName: string) => {
+    setVenueToDelete({ id: venueId, name: venueName });
+
+    // Create a function that will be called when confirm is clicked
+    const handleConfirm = async () => {
+      setModalLoading(true);
+
+      try {
+        const result = await deleteVenue(venueId);
+
+        if (result.success) {
+          setVenues(venues.filter((venue) => venue.id !== venueId));
+          toast.success("Venue deleted successfully!");
+          setVenueToDelete(null);
+          hideModal();
+
+          // Force refresh the venues list to ensure consistency
+          setTimeout(() => {
+            fetchVenues();
+          }, 1000);
+        } else {
+          toast.error(result.error || "Failed to delete venue");
+          setModalLoading(false);
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred");
+        setModalLoading(false);
+      }
+    };
+
+    showModal({
+      title: "Delete Venue",
+      description: `Are you sure you want to delete "${venueName}"? This action cannot be undone.`,
+      confirmText: "Delete Venue",
+      cancelText: "Cancel",
+      onConfirm: handleConfirm,
+      isLoading: false,
+      variant: "destructive",
+    });
+  };
 
   const handleSignOut = () => {
     setSigningOut(true);
@@ -85,10 +195,12 @@ function DashboardContent() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-blue-600 text-center">
-                  0
+                  {loading ? "..." : venues.length}
                 </p>
                 <p className="text-blue-700 text-center text-sm">
-                  No venues yet
+                  {venues.length === 0
+                    ? "No venues yet"
+                    : `${venues.length} venue${venues.length === 1 ? "" : "s"}`}
                 </p>
               </CardContent>
             </Card>
@@ -126,18 +238,116 @@ function DashboardContent() {
                   <Calendar className="w-5 h-5 mr-2" />
                   Create New Event
                 </Button>
+                <Link href="/venues/add">
+                  <Button
+                    variant="outline"
+                    className="border-blue-600 text-blue-600 hover:bg-blue-50 h-12 w-full"
+                  >
+                    <MapPin className="w-5 h-5 mr-2" />
+                    Add Venue
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Venues List */}
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg mt-8">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl text-blue-900">
+                  Your Venues
+                </CardTitle>
                 <Button
+                  onClick={fetchVenues}
+                  disabled={loading}
                   variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50 h-12"
+                  size="sm"
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
                 >
-                  <MapPin className="w-5 h-5 mr-2" />
-                  Add Venue
+                  {loading ? "Refreshing..." : "Refresh"}
                 </Button>
               </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">
+                  <p className="text-blue-700">Loading venues...</p>
+                </div>
+              ) : venues.length === 0 ? (
+                <div className="text-center py-8">
+                  <MapPin className="w-12 h-12 text-blue-300 mx-auto mb-4" />
+                  <p className="text-blue-700 text-lg mb-4">No venues yet</p>
+                  <p className="text-blue-600 text-sm mb-6">
+                    Create your first venue to get started
+                  </p>
+                  <Link href="/venues/add">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Add Your First Venue
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {venues.map((venue) => (
+                    <div
+                      key={venue.id}
+                      className="border border-blue-200 rounded-lg p-4 bg-white/50 hover:bg-white/70 transition-colors"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-blue-900 text-lg">
+                          {venue.name}
+                        </h3>
+                        <div className="flex space-x-2">
+                          <Link href={`/venues/edit/${venue.id}`}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-blue-600 hover:bg-blue-50 p-1 h-8 w-8"
+                              title="Edit venue"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </Link>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() =>
+                              handleDeleteVenue(venue.id, venue.name)
+                            }
+                            className="text-red-600 hover:bg-red-50 p-1 h-8 w-8"
+                            title="Delete venue"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-blue-700 text-sm mb-2">
+                        {venue.address}, {venue.city}
+                        {venue.state && `, ${venue.state}`}
+                      </p>
+                      {venue.capacity && (
+                        <p className="text-blue-600 text-sm mb-2">
+                          Capacity: {venue.capacity.toLocaleString()}
+                        </p>
+                      )}
+                      {venue.description && (
+                        <p className="text-gray-600 text-sm line-clamp-2">
+                          {venue.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <GenericConfirmationModal modal={modal} onClose={hideModal} />
     </div>
   );
 }
