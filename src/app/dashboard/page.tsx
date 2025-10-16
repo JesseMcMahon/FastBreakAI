@@ -655,7 +655,9 @@ function DashboardContent() {
                       </div>
                       <p className="text-blue-700 text-sm mb-2">
                         {event.sport_type} •{" "}
-                        {new Date(event.start_date).toLocaleDateString()}
+                        {event.end_date
+                          ? `${new Date(event.start_date).toLocaleDateString()} - ${new Date(event.end_date).toLocaleDateString()}`
+                          : new Date(event.start_date).toLocaleDateString()}
                       </p>
                       {event.description && (
                         <p className="text-gray-600 text-sm line-clamp-2">
