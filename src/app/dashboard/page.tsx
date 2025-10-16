@@ -283,42 +283,48 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
       {/* Navigation */}
-      <nav className="flex items-center justify-between p-6 lg:px-8 bg-white/80 backdrop-blur-sm border-b border-blue-200">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
+      <nav className="flex items-center justify-between p-4 sm:p-6 lg:px-8 bg-white/80 backdrop-blur-sm border-b border-blue-200">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+            <Zap className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-blue-900">
-            Sports Connect
-          </span>
+          <div className="hidden sm:block">
+            <h1 className="text-xl font-bold text-blue-900">Sports Connect</h1>
+            <p className="text-blue-600 text-sm">
+              Welcome, {user?.email?.split("@")[0]}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <span className="text-blue-700">Welcome, {user?.email}</span>
-          <Button
-            onClick={handleSignOut}
-            disabled={signingOut}
-            variant="ghost"
-            className="text-blue-700 hover:bg-blue-50 cursor-pointer"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
+        <Button
+          onClick={handleSignOut}
+          disabled={signingOut}
+          variant="ghost"
+          size="sm"
+          className="text-blue-700 hover:bg-blue-50 cursor-pointer p-2"
+          title={signingOut ? "Signing Out..." : "Sign Out"}
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="hidden sm:inline ml-2">
             {signingOut ? "Signing Out..." : "Sign Out"}
-          </Button>
-        </div>
+          </span>
+        </Button>
       </nav>
 
       {/* Dashboard Content */}
-      <main className="p-6">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold text-blue-900 mb-8">Dashboard</h1>
+      <main className="p-4 sm:p-6">
+        <div className="max-w-6xl mx-auto overflow-x-hidden">
+          <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-6 sm:mb-8">
+            Dashboard
+          </h1>
 
           {/* Quick Stats and Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
-              <CardHeader className="text-center">
+              <CardHeader className="text-center px-4 py-6">
                 <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
                   <Calendar className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-xl text-blue-900">
+                <CardTitle className="text-lg sm:text-xl text-blue-900 break-words">
                   Total Events
                 </CardTitle>
               </CardHeader>
@@ -335,11 +341,13 @@ function DashboardContent() {
             </Card>
 
             <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
-              <CardHeader className="text-center">
+              <CardHeader className="text-center px-4 py-6">
                 <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
                   <MapPin className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-xl text-blue-900">Venues</CardTitle>
+                <CardTitle className="text-lg sm:text-xl text-blue-900 break-words">
+                  Venues
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-blue-600 text-center">
@@ -355,11 +363,11 @@ function DashboardContent() {
 
             {/* Quick Actions */}
             <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg">
-              <CardHeader className="text-center">
+              <CardHeader className="text-center px-4 py-6">
                 <div className="w-12 h-12 bg-blue-600 rounded-lg mb-4 flex items-center justify-center mx-auto">
                   <Zap className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-xl text-blue-900">
+                <CardTitle className="text-lg sm:text-xl text-blue-900 break-words">
                   Quick Actions
                 </CardTitle>
               </CardHeader>
@@ -386,14 +394,14 @@ function DashboardContent() {
           </div>
 
           {/* Search and Filter */}
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg mt-8">
-            <CardHeader>
-              <CardTitle className="text-xl text-blue-900">
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg mt-6 sm:mt-8">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl text-blue-900">
                 Search & Filter
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[120px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Search Input */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-blue-900">
@@ -408,8 +416,8 @@ function DashboardContent() {
                   />
                 </div>
 
-                {/* Filter Section - Fixed Height */}
-                <div className="space-y-2 min-h-[80px]">
+                {/* Filter Section */}
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-blue-900">
                     {activeTab === "events" ? "Sport Type" : "City"}
                   </label>
@@ -443,7 +451,7 @@ function DashboardContent() {
                 </div>
 
                 {/* Clear Filters Button */}
-                <div className="space-y-2 min-h-[80px]">
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-blue-900">
                     Actions
                   </label>
@@ -465,17 +473,17 @@ function DashboardContent() {
           </Card>
 
           {/* Toggle and Content */}
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg mt-8">
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg mt-6 sm:mt-8">
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-4">
-                  <CardTitle className="text-2xl text-blue-900">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+                  <CardTitle className="text-xl sm:text-2xl text-blue-900">
                     Your {activeTab === "venues" ? "Venues" : "Events"}
                   </CardTitle>
-                  <div className="flex bg-blue-100 rounded-lg p-1">
+                  <div className="flex bg-blue-100 rounded-lg p-1 w-full sm:w-auto">
                     <button
                       onClick={() => setActiveTab("events")}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                      className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                         activeTab === "events"
                           ? "bg-white text-blue-900 shadow-sm"
                           : "text-blue-700 hover:text-blue-900"
@@ -485,7 +493,7 @@ function DashboardContent() {
                     </button>
                     <button
                       onClick={() => setActiveTab("venues")}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                      className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                         activeTab === "venues"
                           ? "bg-white text-blue-900 shadow-sm"
                           : "text-blue-700 hover:text-blue-900"
@@ -500,7 +508,7 @@ function DashboardContent() {
                   disabled={loading}
                   variant="outline"
                   size="sm"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer w-full sm:w-auto"
                 >
                   {loading ? "Refreshing..." : "Refresh"}
                 </Button>
@@ -534,17 +542,17 @@ function DashboardContent() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {venues.map((venue) => (
                       <div
                         key={venue.id}
                         className="border border-blue-200 rounded-lg p-4 bg-white/50 hover:bg-white/70 transition-colors"
                       >
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-semibold text-blue-900 text-lg">
+                        <div className="flex justify-between items-start mb-2 gap-2">
+                          <h3 className="font-semibold text-blue-900 text-base sm:text-lg flex-1 min-w-0">
                             {venue.name}
                           </h3>
-                          <div className="flex space-x-2">
+                          <div className="flex space-x-1 sm:space-x-2 flex-shrink-0">
                             <Link href={`/venues/edit/${venue.id}`}>
                               <Button
                                 size="sm"
@@ -603,17 +611,17 @@ function DashboardContent() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {events.map((event) => (
                     <div
                       key={event.id}
                       className="border border-blue-200 rounded-lg p-4 bg-white/50 hover:bg-white/70 transition-colors"
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-blue-900 text-lg">
+                      <div className="flex justify-between items-start mb-2 gap-2">
+                        <h3 className="font-semibold text-blue-900 text-base sm:text-lg flex-1 min-w-0">
                           {event.name}
                         </h3>
-                        <div className="flex space-x-2">
+                        <div className="flex space-x-1 sm:space-x-2 flex-shrink-0">
                           <Link href={`/events/edit/${event.id}`}>
                             <Button
                               size="sm"

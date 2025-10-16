@@ -85,25 +85,28 @@ function AddVenueContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
       {/* Navigation */}
-      <nav className="flex items-center justify-between p-6 lg:px-8 bg-white/80 backdrop-blur-sm border-b border-blue-200">
+      <nav className="flex items-center justify-between p-4 sm:p-6 lg:px-8 bg-white/80 backdrop-blur-sm border-b border-blue-200">
         <button
           onClick={() => router.push("/dashboard")}
-          className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer bg-transparent border-none p-0"
+          className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer bg-transparent border-none p-0"
         >
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+            <Zap className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-blue-900">
-            Sports Connect
-          </span>
+          <div className="hidden sm:block">
+            <h1 className="text-xl font-bold text-blue-900">Sports Connect</h1>
+            <p className="text-blue-600 text-sm">Add Venue</p>
+          </div>
         </button>
         <Link href="/dashboard">
           <Button
             variant="ghost"
-            className="text-blue-700 hover:bg-blue-50 cursor-pointer"
+            size="sm"
+            className="text-blue-700 hover:bg-blue-50 cursor-pointer p-2"
+            title="Back to Dashboard"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
+            <ArrowLeft className="w-5 h-5" />
+            <span className="hidden sm:inline ml-2">Back to Dashboard</span>
           </Button>
         </Link>
       </nav>

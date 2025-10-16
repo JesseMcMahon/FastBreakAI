@@ -119,4 +119,13 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Prevent text overflow issues */
+  .card-title,
+  .text-lg,
+  .text-xl,
+  .text-2xl {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
 }
