@@ -116,40 +116,20 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 ### 4. Database Setup
 
-Run the following SQL commands in your Supabase SQL editor:
+Set up your Supabase database with the following steps:
 
-```sql
--- Enable RLS
-ALTER TABLE venues ENABLE ROW LEVEL SECURITY;
-ALTER TABLE events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE event_venues ENABLE ROW LEVEL SECURITY;
+1. **Create Tables**: Create `venues`, `events`, and `event_venues` tables with appropriate columns
+2. **Enable RLS**: Enable Row Level Security on all tables
+3. **Create Policies**: Set up RLS policies to ensure users can only access their own data
 
--- Venues policies
-CREATE POLICY "Users can view their own venues" ON venues FOR SELECT USING (auth.uid() = created_by);
-CREATE POLICY "Users can insert their own venues" ON venues FOR INSERT WITH CHECK (auth.uid() = created_by);
-CREATE POLICY "Users can update their own venues" ON venues FOR UPDATE USING (auth.uid() = created_by);
-CREATE POLICY "Users can delete their own venues" ON venues FOR DELETE USING (auth.uid() = created_by);
+**Important Security Notes:**
 
--- Events policies
-CREATE POLICY "Users can view their own events" ON events FOR SELECT USING (auth.uid() = created_by);
-CREATE POLICY "Users can insert their own events" ON events FOR INSERT WITH CHECK (auth.uid() = created_by);
-CREATE POLICY "Users can update their own events" ON events FOR UPDATE USING (auth.uid() = created_by);
-CREATE POLICY "Users can delete their own events" ON events FOR DELETE USING (auth.uid() = created_by);
+- All tables use Row Level Security (RLS) for data protection
+- Users can only view, create, update, and delete their own records
+- The `created_by` field links records to the authenticated user
+- Junction table `event_venues` maintains many-to-many relationships securely
 
--- Event venues policies
-CREATE POLICY "Users can view event venues" ON event_venues FOR SELECT USING (
-  EXISTS (SELECT 1 FROM events WHERE events.id = event_venues.event_id AND events.created_by = auth.uid())
-);
-CREATE POLICY "Users can insert event venues" ON event_venues FOR INSERT WITH CHECK (
-  EXISTS (SELECT 1 FROM events WHERE events.id = event_venues.event_id AND events.created_by = auth.uid())
-);
-CREATE POLICY "Users can update event venues" ON event_venues FOR UPDATE USING (
-  EXISTS (SELECT 1 FROM events WHERE events.id = event_venues.event_id AND events.created_by = auth.uid())
-);
-CREATE POLICY "Users can delete event venues" ON event_venues FOR DELETE USING (
-  EXISTS (SELECT 1 FROM events WHERE events.id = event_venues.event_id AND events.created_by = auth.uid())
-);
-```
+For detailed SQL setup instructions, please refer to the Supabase documentation or contact the development team for the complete database schema.
 
 ### 5. Run the Development Server
 
